@@ -6,6 +6,7 @@ require("dotenv").config();
 // bring routes
 const authRoutes = require("./routes/auth");
 const promptRoutes = require("./routes/prompt");
+const userHistoryRoutes = require("./routes/userhistory");
 
 const port = process.env.PORT || 4000;
 const app = express();
@@ -24,6 +25,7 @@ mongoose
 // routes middleware
 app.use("/ai/auth", authRoutes);
 app.use("/ai/prompt", promptRoutes);
+app.use("/ai/userhistory", userHistoryRoutes);
 
 //public data serve
 // app.use("/api/images", express.static("public"));
