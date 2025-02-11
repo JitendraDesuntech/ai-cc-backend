@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const sha256 = require("sha256");
 const sendEmail = require("../utils/emailService");
 const User = require("../models/users");
+const { getRandomString } = require("../utils/misc");
+const Secure = require("../models/secure");
 
 const createJwtToken = (user) => {
   return jwt.sign({ user }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -18,18 +20,7 @@ exports.signup = async (req, res) => {
     role,
   };
 
-  // uncomment if phone is required
-  //   if (!phone || phone.length < 10 || phone != parseInt(phone)) {
-  //     return res.json({
-  //       error: "Phone is required",
-  //       code: "not_acceptable",
-  //       message: "Failure",
-  //       status: 406,
-  //     });
-  //   }
-
   var newUser = new User(userData);
-  // console.log("newUser : ", newUser);
 
   if (email) {
     email = email.trim().toLowerCase();
@@ -40,7 +31,8 @@ exports.signup = async (req, res) => {
   }
   let userEmail = await User.findOne({ email: newUser.email });
   if (userEmail) {
-    return res.status(400).json({
+    return res.json({
+      status: 400,
       code: "Failure",
       message: "Email is already register",
     });
@@ -50,7 +42,8 @@ exports.signup = async (req, res) => {
       .then((user) => {
         user.toObject();
         delete user.pass;
-        return res.status(200).json({
+        return res.json({
+          status: 200,
           code: "success",
           message: "User saved succesfully",
           user,
@@ -71,19 +64,22 @@ exports.signin = async (req, res) => {
   // console.log("email -> ", email);
   const userone = await User.findOne({ email });
   if (!userone) {
-    return res.status(404).json({
+    return res.json({
+      status: 404,
       message: "User not found",
       code: "failed",
     });
   } else if (userone.pass !== pass) {
-    return res.status(401).json({
+    return res.json({
+      status: 401,
       message: "Invalid Credentials",
       code: "failed",
     });
   } else {
     const user = userone.toObject(); // convert mongoose doc to object
     delete user.pass; // removing pass from user
-    return res.status(200).json({
+    return res.json({
+      status: 200,
       code: "success",
       message: "User authenticated successfully!",
       token: createJwtToken(userone),
@@ -294,42 +290,49 @@ exports.sendOtpEmail = async (req, res) => {
 };
 
 exports.forgotPassword = async (req, res) => {
-  console.log("yes called the forget password");
   const { email } = req.body;
   const user = await User.findOne({ email });
   if (!user) {
-    return res.status(404).json({
+    return res.json({
+      status: 404,
       code: "failed",
       message: "user not found",
     });
   } else {
-    try {
-      await sendEmail(
-        email,
-        "Password change Request",
-        `<div>
-          <p>Hello <b>${email}</b>, you have requested to change the password</p>
-          <p>if the request is not initiated by you, ignore this mail</p>
-          <p>Otherwise, click the link below to change your password</p>
-        </div>`
-      );
-      res.status(200).json({ message: "Email sent successfully!" });
-    } catch (error) {
-      res.status(500).json({ message: "Email sending failed", error });
+    const secure = getRandomString();
+    await Secure.deleteMany({ email });
+    let newSecure = new Secure({ email, secure });
+    const success = await newSecure.save();
+    if (success) {
+      try {
+        await sendEmail(
+          email,
+          "Password change Request",
+          `<div>
+            <p>Hello <b>${email}</b>, you have requested to change the password</p>
+            <p>if the request is not initiated by you, ignore this mail</p>
+            <p>Otherwise, please go to the <a href='${process.env.SITE_URL}/verifypass?hash=${secure}&email=${email}' target='_blank'>Reset link</a> and change your password</p>
+          </div>`
+        );
+        res.status(200).json({ message: "Email sent successfully!" });
+      } catch (error) {
+        res.status(500).json({ message: "Email sending failed", error });
+      }
     }
   }
 };
 
-exports.changePassword = async (req, res) => {
-  const { email, pass } = req.body;
+exports.resetPassword = async (req, res) => {
+  const { email, pass, hash } = req.body;
   let newPass = sha256(pass);
   let user = await User.findOne({ email });
-  console.log("user ----> ", user);
-  if (user) {
+  let code = await Secure.findOne({ email });
+  // console.log("user ----> ", user);
+  if (user && code.secure === hash) {
     await User.findOneAndUpdate({ email: email }, { pass: newPass });
     return res.status(200).json({
       code: "success",
-      message: "Password changed seccessfully!",
+      message: "Password Reset successfully!",
     });
   } else {
     return res.json({
@@ -338,39 +341,24 @@ exports.changePassword = async (req, res) => {
       code: "failed",
     });
   }
+};
 
-  // AdminOtp.findOne({ email, otp }).exec(async (err, admin) => {
-  //   if (admin) {
-  //     await AdminOtp.deleteMany({ email }).exec();
-  //     Admin.findOneAndUpdate({ email }, { password: newPassword }).exec(
-  //       (error, success) => {
-  //         if (success) {
-  //           return res.json({
-  //             code: "success",
-  //             message: "success",
-  //             status: 200,
-  //           });
-  //         } else {
-  //           return res.json({
-  //             status: 500,
-  //             message: "Internal Server Error",
-  //             code: "failed",
-  //           });
-  //         }
-  //       }
-  //     );
-  //   } else if (admin == null) {
-  //     return res.json({
-  //       status: 404,
-  //       message: "Email invalid",
-  //       code: "invalid",
-  //     });
-  //   } else {
-  //     return res.json({
-  //       status: 500,
-  //       message: "Internal Server Error",
-  //       code: "failed",
-  //     });
-  //   }
-  // });
+exports.changePassword = async (req, res) => {
+  let { email, oldpass, newpass } = req.body;
+  oldpass = sha256(oldpass);
+  newpass = sha256(newpass);
+  let user = await User.findOne({ email });
+  if (user && user.pass === oldpass) {
+    await User.findOneAndUpdate({ email: email }, { pass: newpass });
+    return res.status(200).json({
+      code: "success",
+      message: "Password Changed successfully!",
+    });
+  } else {
+    return res.json({
+      status: 404,
+      message: "User not found",
+      code: "failed",
+    });
+  }
 };

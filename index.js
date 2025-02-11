@@ -22,8 +22,8 @@ mongoose
   .catch((err) => console.log(err));
 
 // routes middleware
-app.use("/test/auth", authRoutes);
-app.use("/test/prompt", promptRoutes);
+app.use("/ai/auth", authRoutes);
+app.use("/ai/prompt", promptRoutes);
 
 //public data serve
 // app.use("/api/images", express.static("public"));

@@ -8,6 +8,15 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER, // Your email address
     pass: process.env.EMAIL_PASS, // App password (if using Gmail, generate App Password)
   },
+  debug: true, // Enable debugging
+});
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Transporter Verification Failed:", error);
+  } else {
+    console.log("✅ Transporter is ready to send emails!");
+  }
 });
 
 // 📩 Send Email Function

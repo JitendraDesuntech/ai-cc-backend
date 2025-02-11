@@ -6,6 +6,7 @@ const {
   validateToken,
   forgotPassword,
   changePassword,
+  resetPassword,
   // verifyUser,
   // resetOtp,
   // sendOtpEmail,
@@ -20,6 +21,8 @@ router.post("/verify-token", validateToken);
 router.post("/forgot-password", forgotPassword);
 
 router.post("/change-password", changePassword);
+
+router.post("/reset-password", resetPassword);
 
 // router.post("/verify", verifyUser);
 
