@@ -357,6 +357,24 @@ exports.changePassword = async (req, res) => {
   } else {
     return res.json({
       status: 404,
+      message: "Invalid Data",
+      code: "failed",
+    });
+  }
+};
+
+exports.resetUsername = async (req, res) => {
+  let { email, name } = req.body;
+  let user = await User.findOne({ email });
+  if (user) {
+    await User.findOneAndUpdate({ email: email }, { name: name });
+    return res.status(200).json({
+      code: "success",
+      message: "UserName Changed successfully!",
+    });
+  } else {
+    return res.json({
+      status: 404,
       message: "User not found",
       code: "failed",
     });

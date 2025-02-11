@@ -7,6 +7,7 @@ const {
   forgotPassword,
   changePassword,
   resetPassword,
+  resetUsername,
   // verifyUser,
   // resetOtp,
   // sendOtpEmail,
@@ -23,6 +24,8 @@ router.post("/forgot-password", forgotPassword);
 router.post("/change-password", changePassword);
 
 router.post("/reset-password", resetPassword);
+
+router.post("/reset-username", resetUsername);
 
 // router.post("/verify", verifyUser);
 
