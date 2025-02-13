@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const {
-  generate_keyword,
+  generate_response,
   generate_article,
   generate_image,
   rewrite_content,
 } = require("../controllers/prompt");
 
-router.post("/generate_keyword", generate_keyword);
+router.post("/generate_response", generate_response);
 
 router.post("/generate_article", generate_article);
 

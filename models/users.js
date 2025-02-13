@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       lowercase: true,
-      // required: true,
+      default: "user",
     },
     is_verified: {
       type: Boolean,

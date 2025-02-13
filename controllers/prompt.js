@@ -1,10 +1,10 @@
 const { generateText, generateImage } = require("../utils/openai");
 
-exports.generate_keyword = async (req, res) => {
+exports.generate_response = async (req, res) => {
   // logic
-  let { title } = req.body;
+  let { instruction, prompt, language, creativity, tone } = req.body;
   const response = await generateText(
-    `generate keywords not more than 4 words for a blog title "${title}", also generate score for each keyword based on their close match with the title`
+    `instruction : "${instruction}", prompt: "${prompt}", language: "${language}", creativity: "${creativity}", tone: "${tone}"`
   );
   if (response) {
     return res.json({

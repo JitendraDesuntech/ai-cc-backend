@@ -1,18 +1,23 @@
 const UserLog = require("../models/userhistory");
 
-const getUserLogs = async (userId, startIndex, endIndex) => {
+const getUserLogs = async (req, res) => {
+  let { userId, startIndex, endIndex } = req.body;
+  console.log("🚀 ~ getUserLogs ~ userId:", userId);
   try {
     const userLog = await UserLog.findOne({ userId });
     if (!userLog) {
-      return { success: false, message: "No logs found for this user" };
+      return res.json({
+        code: "failed",
+        message: "No logs found for this user",
+      });
     }
     const logs = userLog.userLogs.slice(
       startIndex,
       endIndex || startIndex + 20
     );
-    return { success: true, data: logs };
+    return res.status(200).json({ code: "success", data: logs });
   } catch (error) {
-    return { success: false, message: error.message };
+    return res.json({ code: "failed", message: error.message });
   }
 };
 
@@ -33,7 +38,7 @@ const addUserLog = async (req, res) => {
       data: userLog,
     });
   } catch (error) {
-    return res.json({ code: "failed", message: error.message });
+    return res.status(500).json({ code: "failed", message: error.message });
   }
 };
 
