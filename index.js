@@ -10,7 +10,7 @@ const promptRoutes = require("./routes/prompt");
 const userHistoryRoutes = require("./routes/userhistory");
 const subscriptionRoutes = require("./routes/subscription");
 
-const port = process.env.PORT || 4000;
+// const port = process.env.PORT || 4000;
 const app = express();
 
 app.use(cors({ origin: "*" }));
