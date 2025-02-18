@@ -54,6 +54,11 @@ app.use((error, req, res, next) => {
 });
 
 // Server start
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Server is running on port ${port}`);
+// });
+
+// Export the serverless handler for vercel deployment
+module.exports = (req, res) => {
+  app(req, res);
+};
