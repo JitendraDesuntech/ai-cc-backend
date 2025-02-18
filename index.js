@@ -36,7 +36,7 @@ app.use("/ai/subscription", subscriptionRoutes);
 // app.use("/api/articles", express.static("uploads"));
 
 app.get("/", (req, res) => {
-  res.json({ message: "server is running" });
+  res.status(200).json({ message: "server is running" });
 });
 
 //Invalid route handling
