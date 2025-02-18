@@ -9,82 +9,103 @@ const createJwtToken = (user) => {
   return jwt.sign({ user }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
 
+// exports.signup = async (req, res) => {
+//   var { name, email, phone, pass, role } = req.body;
+//   pass = sha256(pass);
+//   var userData = {
+//     name,
+//     email,
+//     phone,
+//     pass,
+//     role,
+//   };
+
+//   var newUser = new User(userData);
+
+//   if (email) {
+//     email = email.trim().toLowerCase();
+//     userData = {
+//       ...userData,
+//       email,
+//     };
+//   }
+//   let userEmail = await User.findOne({ email: newUser.email });
+//   if (userEmail) {
+//     return res.json({
+//       status: 400,
+//       code: "Failure",
+//       message: "Email is already register",
+//     });
+//   } else {
+//     newUser
+//       .save()
+//       .then((user) => {
+//         user.toObject();
+//         delete user.pass;
+//         return res.json({
+//           status: 200,
+//           code: "success",
+//           message: "User saved succesfully",
+//           user,
+//         });
+//       })
+//       .catch((err) => {
+//         return res.status(500).json({
+//           error: err,
+//           message: "Server Error",
+//           code: "failed",
+//         });
+//       });
+//   }
+// };
+
 exports.signup = async (req, res) => {
-  var { name, email, phone, pass, role } = req.body;
-  pass = sha256(pass);
-  var userData = {
-    name,
-    email,
-    phone,
-    pass,
-    role,
-  };
-
-  var newUser = new User(userData);
-
-  if (email) {
+  try {
+    let { name, email, phone, pass, role } = req.body;
     email = email.trim().toLowerCase();
-    userData = {
-      ...userData,
-      email,
-    };
-  }
-  let userEmail = await User.findOne({ email: newUser.email });
-  if (userEmail) {
-    return res.json({
-      status: 400,
-      code: "Failure",
-      message: "Email is already register",
+    pass = sha256(pass);
+
+    if (await User.findOne({ email })) {
+      return res.status(400).json({ error: "Email is already registered" });
+    }
+
+    const newUser = new User({ name, email, phone, pass, role });
+    const savedUser = await newUser.save();
+
+    const { pass: _, ...userWithoutPass } = savedUser.toObject();
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: userWithoutPass,
     });
-  } else {
-    newUser
-      .save()
-      .then((user) => {
-        user.toObject();
-        delete user.pass;
-        return res.json({
-          status: 200,
-          code: "success",
-          message: "User saved succesfully",
-          user,
-        });
-      })
-      .catch((err) => {
-        return res.status(500).json({
-          error: err,
-          message: "Server Error",
-          code: "failed",
-        });
-      });
+  } catch (error) {
+    res.status(500).json({ error: "Server Error" });
   }
 };
 
 exports.signin = async (req, res) => {
-  var { email, pass } = req.body;
-  // console.log("email -> ", email);
-  const userone = await User.findOne({ email });
-  if (!userone) {
-    return res.json({
-      status: 404,
-      message: "User not found",
-      code: "failed",
-    });
-  } else if (userone.pass !== pass) {
-    return res.json({
-      status: 401,
-      message: "Invalid Credentials",
-      code: "failed",
-    });
-  } else {
-    const user = userone.toObject(); // convert mongoose doc to object
-    delete user.pass; // removing pass from user
-    return res.json({
-      status: 200,
-      code: "success",
+  try {
+    let { email, pass } = req.body;
+    email = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.pass !== pass) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const { pass: _, ...userWithoutPass } = user.toObject(); // Remove password
+
+    res.status(200).json({
       message: "User authenticated successfully!",
-      token: createJwtToken(userone),
-      user: user,
+      token: createJwtToken(user),
+      user: userWithoutPass,
     });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
   }
 };
 

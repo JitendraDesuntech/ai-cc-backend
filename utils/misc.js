@@ -8,4 +8,11 @@ function getRandomString(length = 8) {
   return result;
 }
 
-module.exports = { getRandomString };
+function wordCounter(text) {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
+}
+
+module.exports = { getRandomString, wordCounter };

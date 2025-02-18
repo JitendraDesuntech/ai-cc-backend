@@ -18,6 +18,7 @@ async function generateText(prompt) {
       messages: [
         { role: "user", content: prompt }, // User input
       ],
+      max_tokens: 500, // Limits response length
     });
     return response.choices[0].message.content;
   } catch (error) {
